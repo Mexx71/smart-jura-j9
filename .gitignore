@@ -1,0 +1,13 @@
+# Secrets
+esphome/secrets.yaml
+
+# ESPHome build artifacts
+esphome/.esphome/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
