@@ -219,4 +219,8 @@ Design-Ziele: Unsichtbar im Maschinengehäuse, kein externes Gehäuse nötig.
 - 2026-03-14: Projektplan erstellt
 - 2026-03-15: ESP32-C6 festgelegt, ESPHome-Config + externe Komponente erstellt (Phase 3 Software)
 - 2026-03-15: Hardware-Maße erfasst, Einbaukonzept festgelegt (intern, Ebene 1, ohne Pin-Header, OTA)
+- 2026-03-15: Service-Port Pinout verifiziert (Pin 3=GND, Pin 6=+5V=4.98V, Pin 2=TxD, Pin 4=RxD)
+- 2026-03-15: ESP32-C6 geflasht, online in HA als "Jura J9.3" (IP 10.10.3.47), WDT-Fix applied
+- 2026-03-15: MAC-Kollision mit KVM-ESP gelöst (statische IP), beide ESPs laufen parallel
+- **Nächster Schritt:** Phase 2 — Löten (ESP + Level Converter + Pinheader) und an Jura anschliessen
 Plan wird laufend aktualisiert.
