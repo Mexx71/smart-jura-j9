@@ -3,6 +3,7 @@ esphome/secrets.yaml
 
 # ESPHome build artifacts
 esphome/.esphome/
+*.bin
 
 # OS
 .DS_Store

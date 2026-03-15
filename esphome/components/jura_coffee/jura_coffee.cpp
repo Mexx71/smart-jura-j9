@@ -1,5 +1,7 @@
 #include "jura_coffee.h"
 #include "esphome/core/log.h"
+#include "esphome/core/hal.h"
+#include "esphome/core/application.h"
 
 namespace esphome {
 namespace jura_coffee {
@@ -17,17 +19,16 @@ void JuraCoffeeComponent::dump_config() {
 
 // Jura protocol encoding: each ASCII char becomes 4 UART bytes.
 // Bits 2 and 5 of each UART byte carry 2 bits of the original char.
-// Base byte is 0xFF (all bits set), then bits 2 and 5 are set from source.
 void JuraCoffeeComponent::encode_and_write_(char c) {
   for (int s = 0; s < 8; s += 2) {
     uint8_t rawbyte = 0xFF;
-    // Bit 2 carries bit s+0
     if (!(c & (1 << (s + 0)))) rawbyte &= ~(1 << 2);
-    // Bit 5 carries bit s+1
     if (!(c & (1 << (s + 1)))) rawbyte &= ~(1 << 5);
     this->write_byte(rawbyte);
   }
-  delay(8);
+  // Use delayMicroseconds instead of delay to avoid WDT issues
+  // 8ms = 8000us, but we yield periodically
+  delayMicroseconds(8000);
 }
 
 std::string JuraCoffeeComponent::cmd2jura_(const std::string &cmd) {
@@ -38,11 +39,15 @@ std::string JuraCoffeeComponent::cmd2jura_(const std::string &cmd) {
   }
 
   // Send command with CR+LF
-  for (char c : cmd) {
-    this->encode_and_write_(c);
+  for (size_t i = 0; i < cmd.length(); i++) {
+    this->encode_and_write_(cmd[i]);
+    // Feed watchdog every few chars
+    if (i % 3 == 0) App.feed_wdt();
   }
   this->encode_and_write_('\r');
+  App.feed_wdt();
   this->encode_and_write_('\n');
+  App.feed_wdt();
 
   // Read response
   std::string response;
@@ -54,7 +59,6 @@ std::string JuraCoffeeComponent::cmd2jura_(const std::string &cmd) {
     if (this->available()) {
       uint8_t rawbyte;
       this->read_byte(&rawbyte);
-      // Decode: extract bits 2 and 5
       if (rawbyte & (1 << 2)) inbyte |= (1 << (s + 0));
       else inbyte &= ~(1 << (s + 0));
       if (rawbyte & (1 << 5)) inbyte |= (1 << (s + 1));
@@ -65,22 +69,22 @@ std::string JuraCoffeeComponent::cmd2jura_(const std::string &cmd) {
         s = 0;
         response += inbyte;
         inbyte = 0;
-        // Check for \r\n termination
         if (response.length() >= 2 &&
             response[response.length() - 2] == '\r' &&
             response[response.length() - 1] == '\n') {
-          // Strip CR+LF
           response.resize(response.length() - 2);
           return response;
         }
       }
     } else {
-      delay(10);
+      delayMicroseconds(10000);  // 10ms wait
     }
     if (++timeout_counter > 500) {
       ESP_LOGW(TAG, "Timeout waiting for Jura response to '%s'", cmd.c_str());
       return "";
     }
+    // Feed watchdog every 10 iterations to prevent WDT reset
+    if (timeout_counter % 10 == 0) App.feed_wdt();
   }
 }
 
@@ -91,13 +95,13 @@ long JuraCoffeeComponent::parse_hex_(const std::string &data, int start, int len
 }
 
 void JuraCoffeeComponent::update() {
+  App.feed_wdt();
+
   // Read EEPROM counters (RT:0000)
   std::string rt_result = this->cmd2jura_("RT:0000");
   if (!rt_result.empty()) {
     ESP_LOGD(TAG, "RT:0000 response: %s", rt_result.c_str());
 
-    // Parse counters from hex response
-    // Offsets based on Jura J9 EEPROM layout (pvtex/hn documentation)
     if (single_espresso_sensor_ != nullptr)
       single_espresso_sensor_->publish_state(parse_hex_(rt_result, 3, 4));
     if (ristretto_sensor_ != nullptr)
@@ -123,6 +127,8 @@ void JuraCoffeeComponent::update() {
   } else {
     ESP_LOGW(TAG, "No response from RT:0000 — check UART wiring (TX/RX)");
   }
+
+  App.feed_wdt();
 
   // Read machine status (IC:)
   std::string ic_result = this->cmd2jura_("IC:");

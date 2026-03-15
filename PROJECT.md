@@ -5,24 +5,57 @@ Jura J9.3 Kaffeemaschine via ESPHome in Home Assistant integrieren.
 Status auslesen (Kaffeezähler, Wassertank, Fehler) und Befehle senden (Kaffee brühen, Spülen, etc.).
 
 ## Hardware
-- **ESP32-C6 Super Mini** (gleiche Platine wie KVM-RF-Projekt)
-- Logic Level Converter 3.3V ↔ 5V (vorhanden)
-- Jura 7-Pin Service Port Connector (vorhanden)
-- Jura J9.3 Kaffeemaschine
+
+### Bauteile & Maße
+| Bauteil | Maße (L×B×H) | Notizen |
+|---------|-------------|---------|
+| ESP32-C6 Super Mini | 27,6 × 18,1 × 5,0 mm | Ohne Pin-Header! USB-C auf 18,1mm Seite |
+| Logic Level Converter 4-Ch | 14,8 × 12,3 × ~1,5 mm | Ohne Pin-Header! Direkt löten |
+| Pinheader Jura 7-Pin | ~18 × 8,5mm Kunststoff | Gesamt mit Pins: 19,8mm |
+
+### Einbau-Situation (Service-Port-Bereich)
+```
+Deckel (geschlossen)
+│
+│  ~7 mm Luft bis Deckel
+│
+├── Ebene 1 ──────────────── ← ESP32 + Level Converter hier (nebeneinander, flach)
+│  5,3 mm
+├── Oberfläche Gehäuse
+│  5,5 mm
+├── Ebene 2 (Oval) ───────── ← 60 × 35 mm, Pinheader + Kabel hier
+│  6,6 mm
+└── Boden (Service-Port)     ← Buchse, Pinheader steckt hier drin
+    = 17,4 mm Gesamttiefe
+```
+
+**Einbau-Konzept:**
+- ESP32 + Level Converter nebeneinander auf Ebene 1 (genug Fläche, 7mm Höhe reicht)
+- Pinheader steckt im Port (Ebene 2/Boden), Kabel gehen hoch zu Ebene 1
+- Ohne Pin-Header an ESP und Level Converter → direkt löten für minimale Bauhöhe
+- Kein USB-C-Zugang nötig → erster Flash vor Einbau, danach OTA/WiFi
+- Stromversorgung: 5V vom Jura Service-Port Pin 2
 
 ## Pinout Jura 7-Pin Service Port
-| Pin | Funktion | Richtung |
-|-----|----------|----------|
-| 1 | GND | — |
-| 2 | +5V | Versorgung |
-| 6 | RX | ESP → Jura |
-| 7 | TX | Jura → ESP |
+Zählung von rechts nach links (Draufsicht auf Buchse):
+```
+(8)  7   6   5   4   3   2   1  (0)
+nc  nc  +5V  nc  RxD GND TxD  nc  nc
+```
+Positionen 0 und 8 sind unbestückt (9er Raster, 7 Pins bestückt).
 
-**WICHTIG: Pinout vor dem Anschließen mit Multimeter verifizieren!**
+| Pin | Funktion | Richtung | Gemessen |
+|-----|----------|----------|----------|
+| 2 | TxD | Jura → ESP | **4,98V** ✓ (idle high) |
+| 3 | GND | — | 0V (Referenz) |
+| 4 | RxD | ESP → Jura | **4,98V** ✓ (Pull-up) |
+| 6 | +5V | Versorgung | **4,98V** ✓ |
+
+Quelle: pvtex/esphome-jura-j9 + HA Community Forum, bestätigt per Multimeter am 2026-03-15.
 
 ## ESPHome Komponente
-- Repository: https://github.com/pvtex/esphome-jura-j9
-- Einbindung als `external_components`
+- Eigene externe Komponente: `esphome/components/jura_coffee/` (esp-idf kompatibel)
+- Referenz: https://github.com/pvtex/esphome-jura-j9 (ESP8266, nicht direkt kompatibel)
 - UART-Kommunikation, Baudrate: 9600 (Jura-Standard)
 
 ## Home Assistant
@@ -74,31 +107,34 @@ Status auslesen (Kaffeezähler, Wassertank, Fehler) und Befehle senden (Kaffee b
 
 ---
 
-## Phase 2: Verkabelung auf Breadboard
+## Phase 2: Verkabelung (direkt gelötet, ohne Header)
 
-### Logic Level Converter verdrahten
+### Verdrahtungsplan
 
 ```
-ESP32 (3.3V Seite)          Level Converter          Jura (5V Seite)
-─────────────────          ─────────────────          ────────────────
-3.3V ──────────────────── LV                HV ────── Pin 2 (+5V)
-GND  ──────────────────── GND              GND ────── Pin 1 (GND)
-TX-Pin (z.B. GPIO1) ───── LV1             HV1 ────── Pin 6 (RX)
-RX-Pin (z.B. GPIO0) ───── LV2             HV2 ────── Pin 7 (TX)
+ESP32-C6 (3.3V)             Level Converter            Jura Pinheader (5V)
+───────────────             ───────────────            ──────────────────
+3V3  ────────────────────── LV              HV ─────── Pin 6 (+5V)
+GND  ────────────────────── GND            GND ─────── Pin 3 (GND)
+GPIO4 (TX) ─────────────── LV1            HV1 ─────── Pin 4 (RxD)
+GPIO5 (RX) ─────────────── LV2            HV2 ─────── Pin 2 (TxD)
 ```
 
-### Aufbau-Checkliste
-- [ ] ESP32 auf Breadboard
-- [ ] Level Converter auf Breadboard
-- [ ] Low-Side (3.3V) verkabeln: LV → 3.3V, GND → GND
-- [ ] High-Side (5V) verkabeln: HV → Jura 5V, GND → Jura GND
-- [ ] Signalleitungen: LV1↔ESP TX, HV1↔Jura RX, LV2↔ESP RX, HV2↔Jura TX
-- [ ] **Vor dem Anschließen an Jura**: Verkabelung nochmal prüfen! Falsches Anschließen kann die Jura-Platine beschädigen.
+**Hinweis:** LV3/LV4 und HV3/HV4 am Level Converter bleiben frei.
 
-### Erster Test ohne Jura
+### Löt-Reihenfolge
+1. [ ] Dünne Drähte (z.B. 26-28 AWG) zuschneiden — kurz halten!
+2. [ ] **ESP32 → Level Converter** (LV-Seite): 3V3→LV, GND→GND, GPIO4→LV1, GPIO5→LV2
+3. [ ] **Level Converter → Pinheader** (HV-Seite): HV→Pin6(+5V), GND→Pin3(GND), HV1→Pin4(RxD), HV2→Pin2(TxD)
+4. [ ] Alle Lötstellen mit Schrumpfschlauch isolieren
+5. [ ] **Vor dem Anschließen an Jura**: Verkabelung mit Multimeter durchklingeln!
+
+### Test vor Einbau (auf dem Tisch)
 - [ ] ESP32 per USB mit Strom versorgen
 - [ ] Multimeter: 3.3V an LV-Seite?
-- [ ] Labornetzteil: 5V an HV-Seite einspeisen → Level Converter funktioniert?
+- [ ] Durchgang GND prüfen
+- [ ] Erster Flash per USB (Phase 3)
+- [ ] Danach: Pinheader in Jura stecken, OTA-Update testen
 
 ---
 
@@ -151,16 +187,15 @@ RX-Pin (z.B. GPIO0) ───── LV2             HV2 ────── Pin 7
 
 ---
 
-## Phase 6: Gehäuse (3D-Druck)
+## Phase 6: Einbau & Fixierung
 
-- [ ] ESP32 ausmessen (L×B×H mm, USB-Port-Position)
-- [ ] Level Converter ausmessen
-- [ ] Fotos machen: Bauteile + Einbauort an/neben der Kaffeemaschine
-- [ ] Kabellänge bestimmen (Service-Port → Gehäuse)
-- [ ] Gehäuse-Design erstellen (OpenSCAD/Fusion360)
-- [ ] Drucken, einpassen, ggf. iterieren
+- [ ] ESP32 + Level Converter auf Ebene 1 positionieren
+- [ ] Fixierung: doppelseitiges Klebeband oder dünne Schaumstoff-Pads
+- [ ] Kabelführung: Drähte vom Pinheader (Ebene 2) sauber nach oben zu Ebene 1
+- [ ] Deckel muss noch schliessen (max 7mm Bauhöhe prüfen!)
+- [ ] Optional: kleines 3D-gedrucktes Trägerplättchen als Montagehilfe
 
-Design-Ziele: Kompakt, runde Kanten, Kabelführung zum Service-Port, Belüftung, unauffällig neben der Maschine.
+Design-Ziele: Unsichtbar im Maschinengehäuse, kein externes Gehäuse nötig.
 
 ---
 
@@ -183,4 +218,5 @@ Design-Ziele: Kompakt, runde Kanten, Kabelführung zum Service-Port, Belüftung,
 ## Status
 - 2026-03-14: Projektplan erstellt
 - 2026-03-15: ESP32-C6 festgelegt, ESPHome-Config + externe Komponente erstellt (Phase 3 Software)
+- 2026-03-15: Hardware-Maße erfasst, Einbaukonzept festgelegt (intern, Ebene 1, ohne Pin-Header, OTA)
 Plan wird laufend aktualisiert.
