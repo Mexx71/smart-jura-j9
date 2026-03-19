@@ -25,15 +25,10 @@ external_components:
       type: local
       path: components
 
-# --- WLAN ---
+# --- WLAN (DHCP) ---
 wifi:
   ssid: "MKWLAN"
   password: !secret wifi_password
-  use_address: smart-jura-j9.local
-  manual_ip:
-    static_ip: 10.10.3.47
-    gateway: 10.10.0.1
-    subnet: 255.255.252.0
 
   ap:
     ssid: "Jura-J9-Fallback"
@@ -62,10 +57,13 @@ status_led:
     inverted: true
 
 # =============================================================
-# UART — Jura Service Port
+# UART — Jura Service Port (bestätigt 2026-03-16)
 # =============================================================
-# GPIO4 (TX) → Level Converter LV1 → HV1 → Jura Pin 6 (RX)
-# GPIO5 (RX) ← Level Converter LV2 ← HV2 ← Jura Pin 7 (TX)
+# Buchse von oben, links nach rechts:
+#   Loch 1=nc, 2=+5V, 3=nc, 4=TxD, 5=GND, 6=RxD, 7=nc
+#
+# GPIO4 (TX) → LV1 → HV1 → Jura Loch 6 (RxD)
+# GPIO5 (RX) ← LV2 ← HV2 ← Jura Loch 4 (TxD)
 # =============================================================
 uart:
   tx_pin: GPIO4
@@ -136,19 +134,47 @@ jura_coffee:
 # Befehle — Jura Protokoll-kodierte UART-Bytes
 # =============================================================
 # Kodierung: Jedes ASCII-Zeichen → 4 Bytes (Bits 2+5 tragen Daten)
-# Befehle: AN:01=Ein, AN:02=Aus, FA:01=Power, FA:03=Espresso,
-#          FA:04=Kaffee, FA:05=Ristretto, FA:06=Cappuccino,
-#          FA:07=Latte, FA:08=Heisswasser
+# Befehle: AN:01=Ein, AN:02=Aus, FA:01=Power-Toggle,
+#          FA:03=Espresso, FA:04=Kaffee, FA:05=Ristretto,
+#          FA:06=Cappuccino, FA:07=Latte, FA:08=Heisswasser
 # =============================================================
 
 button:
+  # --- Power ---
+  - platform: template
+    name: "${friendly_name} Power Toggle (FA:01)"
+    icon: "mdi:power"
+    id: btn_power_toggle
+    on_press:
+      - logger.log: "Jura → Power Toggle (FA:01)"
+      - uart.write:       # F
+          data: [0xFB, 0xDF, 0xDB, 0xDF]
+      - delay: 8ms
+      - uart.write:       # A
+          data: [0xDF, 0xDB, 0xDB, 0xDF]
+      - delay: 8ms
+      - uart.write:       # :
+          data: [0xFB, 0xFB, 0xFF, 0xDB]
+      - delay: 8ms
+      - uart.write:       # 0
+          data: [0xDB, 0xDB, 0xFF, 0xDB]
+      - delay: 8ms
+      - uart.write:       # 1
+          data: [0xDF, 0xDB, 0xFF, 0xDB]
+      - delay: 8ms
+      - uart.write:       # \r
+          data: [0xDF, 0xFF, 0xDB, 0xDB]
+      - delay: 8ms
+      - uart.write:       # \n
+          data: [0xFB, 0xFB, 0xDB, 0xDB]
+
   # --- Getränke ---
   - platform: template
     name: "${friendly_name} Espresso machen"
     icon: "mdi:coffee"
     id: btn_espresso
     on_press:
-      - logger.log: "Jura → Espresso"
+      - logger.log: "Jura → Espresso (FA:03)"
       - uart.write:       # F
           data: [0xFB, 0xDF, 0xDB, 0xDF]
       - delay: 8ms
@@ -175,7 +201,7 @@ button:
     icon: "mdi:coffee"
     id: btn_coffee
     on_press:
-      - logger.log: "Jura → Kaffee"
+      - logger.log: "Jura → Kaffee (FA:04)"
       - uart.write:       # F
           data: [0xFB, 0xDF, 0xDB, 0xDF]
       - delay: 8ms
@@ -202,7 +228,7 @@ button:
     icon: "mdi:coffee"
     id: btn_ristretto
     on_press:
-      - logger.log: "Jura → Ristretto"
+      - logger.log: "Jura → Ristretto (FA:05)"
       - uart.write:       # F
           data: [0xFB, 0xDF, 0xDB, 0xDF]
       - delay: 8ms
@@ -229,7 +255,7 @@ button:
     icon: "mdi:coffee-outline"
     id: btn_cappuccino
     on_press:
-      - logger.log: "Jura → Cappuccino"
+      - logger.log: "Jura → Cappuccino (FA:06)"
       - uart.write:       # F
           data: [0xFB, 0xDF, 0xDB, 0xDF]
       - delay: 8ms
@@ -256,7 +282,7 @@ button:
     icon: "mdi:coffee-outline"
     id: btn_latte
     on_press:
-      - logger.log: "Jura → Latte Macchiato"
+      - logger.log: "Jura → Latte Macchiato (FA:07)"
       - uart.write:       # F
           data: [0xFB, 0xDF, 0xDB, 0xDF]
       - delay: 8ms
@@ -283,7 +309,7 @@ button:
     icon: "mdi:cup-water"
     id: btn_hot_water
     on_press:
-      - logger.log: "Jura → Heisswasser"
+      - logger.log: "Jura → Heisswasser (FA:08)"
       - uart.write:       # F
           data: [0xFB, 0xDF, 0xDB, 0xDF]
       - delay: 8ms
@@ -311,8 +337,8 @@ button:
     icon: "mdi:water-sync"
     id: btn_rinse
     on_press:
-      - logger.log: "Jura → Spuelen (AN:02 = Standby, dann AN:01 = Ein)"
-      # AN:02 — Standby (löst Spülung beim Wiedereinschalten aus)
+      - logger.log: "Jura → Spuelen (AN:02 → AN:01)"
+      # AN:02 — Standby
       - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  # A
       - delay: 8ms
       - uart.write: [0xFB, 0xFF, 0xDB, 0xDF]  # N
@@ -327,7 +353,7 @@ button:
       - delay: 8ms
       - uart.write: [0xFB, 0xFB, 0xDB, 0xDB]  # \n
       - delay: 3000ms
-      # AN:01 — Einschalten (Maschine spült automatisch)
+      # AN:01 — Einschalten (spült automatisch)
       - uart.write: [0xDF, 0xDB, 0xDB, 0xDF]  # A
       - delay: 8ms
       - uart.write: [0xFB, 0xFF, 0xDB, 0xDF]  # N
@@ -346,7 +372,7 @@ button:
     name: "${friendly_name} ESP Restart"
 
 # =============================================================
-# Maschine Ein/Aus
+# Maschine Ein/Aus (AN:01 / AN:02)
 # =============================================================
 switch:
   - platform: template

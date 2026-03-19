@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartJuraJ9 — Verdrahtungsanleitung</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --card: #1a1a1e;
+    --card-border: #2a2a2e;
+    --text: #f5f5f7;
+    --text-dim: #86868b;
+    --accent: #2997ff;
+    --red: #ff453a;
+    --orange: #ff9f0a;
+    --green: #30d158;
+    --yellow: #ffd60a;
+    --purple: #bf5af2;
+    --pink: #ff375f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 0;
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 80px 20px 60px;
+    background: linear-gradient(180deg, #1a1a2e 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--card-border);
+  }
+  .hero h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p {
+    font-size: 1.25rem;
+    color: var(--text-dim);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* Section */
+  section {
+    padding: 60px 0;
+  }
+  section + section {
+    border-top: 1px solid var(--card-border);
+  }
+  h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    letter-spacing: -0.01em;
+  }
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--accent);
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  /* Component cards */
+  .component-card {
+    text-align: center;
+  }
+  .component-card .icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+  }
+  .component-card .name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+  }
+  .component-card .dims {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+  }
+
+  /* Wiring Diagram */
+  .diagram-wrapper {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 32px 16px;
+    overflow-x: auto;
+  }
+  .diagram-wrapper svg {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* Wire table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+  }
+  th, td {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--card-border);
+    font-size: 0.95rem;
+  }
+  th {
+    color: var(--text-dim);
+    font-weight: 500;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .wire-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .wire-red { background: var(--red); }
+  .wire-black { background: #444; border: 1px solid #666; }
+  .wire-blue { background: var(--accent); }
+  .wire-green { background: var(--green); }
+
+  /* Steps */
+  .step {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .step-content {
+    flex: 1;
+    padding-top: 6px;
+  }
+  .step-content strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+  .step-content p {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+  }
+
+  /* Warning box */
+  .warning {
+    background: rgba(255, 159, 10, 0.1);
+    border: 1px solid rgba(255, 159, 10, 0.3);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 20px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .warning-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+    line-height: 1.5;
+  }
+  .warning p { color: var(--orange); font-size: 0.95rem; }
+
+  .danger {
+    background: rgba(255, 69, 58, 0.1);
+    border: 1px solid rgba(255, 69, 58, 0.3);
+  }
+  .danger p { color: var(--red); }
+
+  .success {
+    background: rgba(48, 209, 88, 0.1);
+    border: 1px solid rgba(48, 209, 88, 0.3);
+  }
+  .success p { color: var(--green); }
+
+  /* Checklist */
+  .checklist {
+    list-style: none;
+    padding: 0;
+  }
+  .checklist li {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.95rem;
+  }
+  .checklist li:last-child { border-bottom: none; }
+  .checklist .check {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--card-border);
+    border-radius: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .checklist .check.checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .checklist .check.checked::after {
+    content: "\2713";
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .checklist li.done { color: var(--text-dim); text-decoration: line-through; }
+
+  /* Pin Layout */
+  .pin-layout {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin: 20px 0;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.85rem;
+  }
+  .pin-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 52px;
+  }
+  .pin-circle {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: white;
+  }
+  .pin-circle.active { background: var(--accent); }
+  .pin-circle.inactive { background: #333; color: #666; }
+  .pin-circle.power { background: var(--red); }
+  .pin-circle.gnd { background: #444; border: 2px solid #666; }
+  .pin-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: center;
+    line-height: 1.2;
+  }
+  .pin-label.highlight { color: var(--text); font-weight: 600; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--card-border);
+  }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 2rem; }
+    .hero p { font-size: 1rem; }
+    .card { padding: 16px; }
+    .diagram-wrapper { padding: 16px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Smart<span>Jura</span>J9</h1>
+  <p>Verdrahtungsanleitung &mdash; ESP32-C6 Super Mini + Level Converter + Jura J9.3 Service Port</p>
+</div>
+
+<div class="container">
+
+  <!-- Bauteile -->
+  <section>
+    <h2>Bauteile</h2>
+    <div class="card-grid">
+      <div class="card component-card">
+        <div class="icon">&#9881;</div>
+        <div class="name">ESP32-C6 Super Mini</div>
+        <div class="dims">27,6 &times; 18,1 &times; 5,0 mm</div>
+        <div class="dims" style="margin-top:4px; color: var(--accent);">3.3V Logik &bull; WiFi &bull; GPIO4 (TX) / GPIO5 (RX)</div>
+      </div>
+      <div class="card component-card">
+        <div class="icon">&#8644;</div>
+        <div class="name">Logic Level Converter 4-Ch</div>
+        <div class="dims">14,8 &times; 12,3 &times; ~1,5 mm</div>
+        <div class="dims" style="margin-top:4px; color: var(--orange);">LV-Seite (3.3V) &harr; HV-Seite (5V)</div>
+      </div>
+      <div class="card component-card">
+        <div class="icon">&#9644;</div>
+        <div class="name">Jura 7-Pin Header</div>
+        <div class="dims">~18 &times; 8,5 mm (Kunststoff) &bull; Pins: 19,8 mm</div>
+        <div class="dims" style="margin-top:4px; color: var(--green);">Steckt in den Service-Port der Jura J9.3</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Jura Pinout -->
+  <section>
+    <h2>Jura Service Port &mdash; Pinout</h2>
+
+    <!-- DEINE SICHT -->
+    <div class="card" style="border-color: var(--accent); margin-bottom: 24px;">
+      <h3 style="color: var(--accent); font-size: 1.3rem;">Deine Sicht: Draufsicht auf die Buchse (von oben in die Maschine)</h3>
+      <p style="color: var(--text-dim); margin-bottom: 16px;">Links nach rechts gez&auml;hlt &mdash; so wie du draufschaust. Best&auml;tigt per Multimeter am 16.03.2026.</p>
+
+      <div class="pin-layout">
+        <div class="pin-slot">
+          <div class="pin-circle inactive">1</div>
+          <div class="pin-label">nc</div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle power">2</div>
+          <div class="pin-label highlight">+5V<br>4.98V<br><small style="color:var(--red)">ROT</small></div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle inactive">3</div>
+          <div class="pin-label">nc</div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle active" style="background: var(--accent);">4</div>
+          <div class="pin-label highlight">TxD<br>4.98V<br><small>Jura&rarr;ESP</small><br><small style="color:var(--accent)">BLAU</small></div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle gnd">5</div>
+          <div class="pin-label highlight">GND<br>&nbsp;<br><small style="color:#888">SCHWARZ</small></div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle active" style="background: var(--green);">6</div>
+          <div class="pin-label highlight">RxD<br>0V<br><small>ESP&rarr;Jura</small><br><small style="color:var(--green)">GR&Uuml;N</small></div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle inactive">7</div>
+          <div class="pin-label">nc</div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 16px; padding: 12px; background: rgba(48,209,88,0.15); border-radius: 8px; border: 1px solid rgba(48,209,88,0.3);">
+        <span style="font-family: 'SF Mono', monospace; font-size: 0.9rem; color: var(--green);">
+          &#10003; Best&auml;tigt per Live-Test am 16.03.2026 &mdash; RT:0000 und IC: liefern Daten
+        </span>
+      </div>
+    </div>
+
+    <!-- PINHEADER SICHT -->
+    <div class="card" style="border-color: var(--orange);">
+      <h3 style="color: var(--orange); font-size: 1.3rem;">Pinheader in der Hand (Pins zeigen nach unten, bereit zum Einstecken)</h3>
+      <p style="color: var(--text-dim); margin-bottom: 16px;">Achtung: Spiegelverkehrt zur Buchse! Was links in der Buchse ist, ist rechts am Pinheader.</p>
+
+      <div class="pin-layout">
+        <div class="pin-slot">
+          <div class="pin-circle inactive">7</div>
+          <div class="pin-label">nc</div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle gnd">6</div>
+          <div class="pin-label highlight">GND</div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle power">5</div>
+          <div class="pin-label highlight">+5V<br><small style="color:var(--red)">ROT</small></div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle gnd">4</div>
+          <div class="pin-label highlight">GND<br><small style="color:#888">SCHWARZ</small></div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle active">3</div>
+          <div class="pin-label highlight">RxD<br><small style="color:var(--accent)">BLAU</small></div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle active" style="background: var(--green);">2</div>
+          <div class="pin-label highlight">TxD<br><small style="color:var(--green)">GR&Uuml;N</small></div>
+        </div>
+        <div class="pin-slot">
+          <div class="pin-circle inactive">1</div>
+          <div class="pin-label">nc</div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 16px; padding: 12px; background: rgba(255,159,10,0.08); border-radius: 8px;">
+        <span style="font-family: 'SF Mono', monospace; font-size: 0.9rem; color: var(--text-dim);">
+          LINKS am Header &nbsp;&nbsp;&nbsp;
+          <span style="color: #555;">&#9675;</span> &nbsp;
+          <span style="color: #666;">&#9679;</span> &nbsp;
+          <span style="color: var(--red);">&#9679; +5V</span> &nbsp;
+          <span style="color: #666;">&#9679; GND</span> &nbsp;
+          <span style="color: var(--accent);">&#9679; RxD</span> &nbsp;
+          <span style="color: var(--green);">&#9679; TxD</span> &nbsp;
+          <span style="color: #555;">&#9675;</span>
+          &nbsp;&nbsp;&nbsp; RECHTS am Header
+        </span>
+      </div>
+    </div>
+
+    <div class="warning">
+      <div class="warning-icon">&#9888;&#65039;</div>
+      <p>Die Jura arbeitet mit <strong>5V-Logik</strong>. Der ESP32-C6 ist <strong>3.3V</strong>. Deshalb ist der Level Converter zwingend n&ouml;tig &mdash; 5V direkt am ESP32 kann den Chip zerst&ouml;ren!</p>
+    </div>
+
+    <div class="success">
+      <div class="warning-icon">&#128161;</div>
+      <p><strong>Trick:</strong> Du musst nur <strong>4 der 7 Pins</strong> verbinden. Die &auml;usseren (1 und 7) und Loch 3 bleiben frei. Verbinde Loch 2 (+5V), 4 (TxD), 5 (GND), 6 (RxD).</p>
+    </div>
+  </section>
+
+  <!-- Verdrahtungsplan SVG -->
+  <section>
+    <h2>Verdrahtungsplan</h2>
+    <div class="diagram-wrapper">
+      <svg viewBox="0 0 900 340" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto;">
+        <!-- Background -->
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- ESP32-C6 Box -->
+        <rect x="30" y="60" width="200" height="220" rx="12" fill="#1e3a5f" stroke="#2997ff" stroke-width="2"/>
+        <text x="130" y="95" text-anchor="middle" fill="#2997ff" font-size="14" font-weight="700" font-family="SF Mono, monospace">ESP32-C6</text>
+        <text x="130" y="115" text-anchor="middle" fill="#6ab0f7" font-size="11" font-family="SF Mono, monospace">Super Mini</text>
+
+        <!-- ESP32 Pins -->
+        <text x="50" y="160" fill="#f5f5f7" font-size="12" font-family="SF Mono, monospace">3V3</text>
+        <circle cx="218" cy="155" r="6" fill="#ff9f0a"/>
+        <text x="50" y="190" fill="#f5f5f7" font-size="12" font-family="SF Mono, monospace">GND</text>
+        <circle cx="218" cy="185" r="6" fill="#666"/>
+        <text x="50" y="220" fill="#f5f5f7" font-size="12" font-family="SF Mono, monospace">GPIO4 <tspan fill="#86868b">(TX)</tspan></text>
+        <circle cx="218" cy="215" r="6" fill="#2997ff"/>
+        <text x="50" y="250" fill="#f5f5f7" font-size="12" font-family="SF Mono, monospace">GPIO5 <tspan fill="#86868b">(RX)</tspan></text>
+        <circle cx="218" cy="245" r="6" fill="#30d158"/>
+
+        <!-- Level Converter Box -->
+        <rect x="340" y="80" width="180" height="200" rx="12" fill="#3a2a1a" stroke="#ff9f0a" stroke-width="2"/>
+        <text x="430" y="110" text-anchor="middle" fill="#ff9f0a" font-size="13" font-weight="700" font-family="SF Mono, monospace">Level Converter</text>
+        <text x="430" y="130" text-anchor="middle" fill="#cc8008" font-size="11" font-family="SF Mono, monospace">3.3V &harr; 5V</text>
+
+        <!-- LV side labels -->
+        <text x="355" y="156" fill="#6ab0f7" font-size="11" font-family="SF Mono, monospace">LV</text>
+        <circle cx="352" cy="155" r="5" fill="#ff9f0a"/>
+        <text x="355" y="186" fill="#6ab0f7" font-size="11" font-family="SF Mono, monospace">GND</text>
+        <circle cx="352" cy="185" r="5" fill="#666"/>
+        <text x="355" y="216" fill="#6ab0f7" font-size="11" font-family="SF Mono, monospace">LV1</text>
+        <circle cx="352" cy="215" r="5" fill="#2997ff"/>
+        <text x="355" y="246" fill="#6ab0f7" font-size="11" font-family="SF Mono, monospace">LV2</text>
+        <circle cx="352" cy="245" r="5" fill="#30d158"/>
+
+        <!-- HV side labels -->
+        <text x="485" y="156" fill="#ff6b6b" font-size="11" font-family="SF Mono, monospace" text-anchor="end">HV</text>
+        <circle cx="508" cy="155" r="5" fill="#ff453a"/>
+        <text x="485" y="186" fill="#ff6b6b" font-size="11" font-family="SF Mono, monospace" text-anchor="end">GND</text>
+        <circle cx="508" cy="185" r="5" fill="#666"/>
+        <text x="485" y="216" fill="#ff6b6b" font-size="11" font-family="SF Mono, monospace" text-anchor="end">HV1</text>
+        <circle cx="508" cy="215" r="5" fill="#2997ff"/>
+        <text x="485" y="246" fill="#ff6b6b" font-size="11" font-family="SF Mono, monospace" text-anchor="end">HV2</text>
+        <circle cx="508" cy="245" r="5" fill="#30d158"/>
+
+        <!-- Jura Pinheader Box -->
+        <rect x="640" y="80" width="220" height="200" rx="12" fill="#1a3a1a" stroke="#30d158" stroke-width="2"/>
+        <text x="750" y="110" text-anchor="middle" fill="#30d158" font-size="13" font-weight="700" font-family="SF Mono, monospace">Jura 7-Pin Header</text>
+        <text x="750" y="130" text-anchor="middle" fill="#28a745" font-size="11" font-family="SF Mono, monospace">Service Port (5V)</text>
+
+        <!-- Jura pins -->
+        <circle cx="652" cy="155" r="5" fill="#ff453a"/>
+        <text x="665" y="158" fill="#f5f5f7" font-size="11" font-family="SF Mono, monospace">Loch 2 &mdash; +5V <tspan fill="#ff453a">(4.98V)</tspan></text>
+        <circle cx="652" cy="185" r="5" fill="#666"/>
+        <text x="665" y="188" fill="#f5f5f7" font-size="11" font-family="SF Mono, monospace">Loch 5 &mdash; GND</text>
+        <circle cx="652" cy="215" r="5" fill="#2997ff"/>
+        <text x="665" y="218" fill="#f5f5f7" font-size="11" font-family="SF Mono, monospace">Loch 6 &mdash; RxD <tspan fill="#86868b">(ESP&rarr;Jura)</tspan></text>
+        <circle cx="652" cy="245" r="5" fill="#30d158"/>
+        <text x="665" y="248" fill="#f5f5f7" font-size="11" font-family="SF Mono, monospace">Loch 4 &mdash; TxD <tspan fill="#86868b">(Jura&rarr;ESP)</tspan></text>
+
+        <!-- Wires: ESP → Level Converter (LV side) -->
+        <!-- 3V3 → LV (orange) -->
+        <line x1="224" y1="155" x2="347" y2="155" stroke="#ff9f0a" stroke-width="3" filter="url(#glow)"/>
+        <!-- GND → GND (gray) -->
+        <line x1="224" y1="185" x2="347" y2="185" stroke="#666" stroke-width="3"/>
+        <!-- GPIO4 → LV1 (blue) -->
+        <line x1="224" y1="215" x2="347" y2="215" stroke="#2997ff" stroke-width="3" filter="url(#glow)"/>
+        <!-- GPIO5 → LV2 (green) -->
+        <line x1="224" y1="245" x2="347" y2="245" stroke="#30d158" stroke-width="3" filter="url(#glow)"/>
+
+        <!-- Wires: Level Converter (HV side) → Jura -->
+        <!-- HV → Pin 6 +5V (red) -->
+        <line x1="513" y1="155" x2="647" y2="155" stroke="#ff453a" stroke-width="3" filter="url(#glow)"/>
+        <!-- GND → Pin 3 GND (gray) -->
+        <line x1="513" y1="185" x2="647" y2="185" stroke="#666" stroke-width="3"/>
+        <!-- HV1 → Pin 4 RxD (blue) -->
+        <line x1="513" y1="215" x2="647" y2="215" stroke="#2997ff" stroke-width="3" filter="url(#glow)"/>
+        <!-- HV2 → Pin 2 TxD (green) -->
+        <line x1="513" y1="245" x2="647" y2="245" stroke="#30d158" stroke-width="3" filter="url(#glow)"/>
+
+        <!-- Labels under diagram -->
+        <text x="130" y="320" text-anchor="middle" fill="#86868b" font-size="11" font-family="sans-serif">3.3V Logik</text>
+        <text x="430" y="320" text-anchor="middle" fill="#86868b" font-size="11" font-family="sans-serif">Pegelwandler</text>
+        <text x="750" y="320" text-anchor="middle" fill="#86868b" font-size="11" font-family="sans-serif">5V Logik</text>
+
+        <!-- Voltage indicators -->
+        <rect x="80" y="30" width="100" height="24" rx="12" fill="rgba(41,151,255,0.2)" stroke="#2997ff" stroke-width="1"/>
+        <text x="130" y="47" text-anchor="middle" fill="#2997ff" font-size="12" font-weight="600" font-family="sans-serif">3.3V</text>
+
+        <rect x="680" y="30" width="100" height="24" rx="12" fill="rgba(255,69,58,0.2)" stroke="#ff453a" stroke-width="1"/>
+        <text x="730" y="47" text-anchor="middle" fill="#ff453a" font-size="12" font-weight="600" font-family="sans-serif">5.0V</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Draht-Tabelle -->
+  <section>
+    <h2>Verbindungen im Detail</h2>
+    <div class="card">
+      <h3>ESP32 &rarr; Level Converter (LV-Seite, 3.3V)</h3>
+      <table>
+        <thead>
+          <tr><th>Draht</th><th>ESP32-C6 Pin</th><th>&rarr;</th><th>Level Converter</th><th>Funktion</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="wire-dot" style="background:#ff9f0a"></span>Orange</td>
+            <td><strong>3V3</strong></td>
+            <td>&rarr;</td>
+            <td><strong>LV</strong></td>
+            <td>Referenzspannung Low-Voltage Seite</td>
+          </tr>
+          <tr>
+            <td><span class="wire-dot wire-black"></span>Schwarz</td>
+            <td><strong>GND</strong></td>
+            <td>&rarr;</td>
+            <td><strong>GND</strong></td>
+            <td>Gemeinsame Masse</td>
+          </tr>
+          <tr>
+            <td><span class="wire-dot wire-blue"></span>Blau</td>
+            <td><strong>GPIO4</strong> (TX)</td>
+            <td>&rarr;</td>
+            <td><strong>LV1</strong></td>
+            <td>Daten ESP &rarr; Jura (TX-Kanal)</td>
+          </tr>
+          <tr>
+            <td><span class="wire-dot wire-green"></span>Gr&uuml;n</td>
+            <td><strong>GPIO5</strong> (RX)</td>
+            <td>&rarr;</td>
+            <td><strong>LV2</strong></td>
+            <td>Daten Jura &rarr; ESP (RX-Kanal)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top: 16px;">
+      <h3>Level Converter (HV-Seite, 5V) &rarr; Jura Pinheader</h3>
+      <table>
+        <thead>
+          <tr><th>Draht</th><th>Level Converter</th><th>&rarr;</th><th>Jura Pin</th><th>Funktion</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="wire-dot" style="background:var(--red)"></span>Rot</td>
+            <td><strong>HV</strong></td>
+            <td>&rarr;</td>
+            <td><strong>Loch 2</strong> (+5V)</td>
+            <td>Referenzspannung HV + Stromversorgung ESP</td>
+          </tr>
+          <tr>
+            <td><span class="wire-dot wire-black"></span>Schwarz</td>
+            <td><strong>GND</strong></td>
+            <td>&rarr;</td>
+            <td><strong>Loch 5</strong> (GND)</td>
+            <td>Gemeinsame Masse</td>
+          </tr>
+          <tr>
+            <td><span class="wire-dot wire-blue"></span>Blau</td>
+            <td><strong>HV1</strong></td>
+            <td>&rarr;</td>
+            <td><strong>Loch 4</strong> (TxD)</td>
+            <td>Daten Jura &rarr; ESP (5V-Pegel)</td>
+          </tr>
+          <tr>
+            <td><span class="wire-dot wire-green"></span>Gr&uuml;n</td>
+            <td><strong>HV2</strong></td>
+            <td>&rarr;</td>
+            <td><strong>Loch 6</strong> (RxD)</td>
+            <td>Daten ESP &rarr; Jura (5V-Pegel)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="success">
+      <div class="warning-icon">&#128161;</div>
+      <p><strong>Merkregel:</strong> TX am ESP geht zu RX an der Jura (und umgekehrt). Der Level Converter &auml;ndert nur die Spannung, nicht die Richtung &mdash; LV1&harr;HV1 ist ein Kanal.</p>
+    </div>
+  </section>
+
+  <!-- Stromversorgung -->
+  <section>
+    <h2>Stromversorgung</h2>
+    <div class="card">
+      <p>Der ESP32-C6 wird <strong>direkt &uuml;ber den Jura Service-Port</strong> mit Strom versorgt:</p>
+      <br>
+      <p>Jura Loch 2 (+5V) &rarr; Level Converter HV &rarr; <em>und zus&auml;tzlich</em> an den <strong>5V/VIN-Pin</strong> des ESP32.</p>
+      <br>
+      <p style="color: var(--text-dim);">Der Level Converter braucht auf der HV-Seite die 5V als Referenz. Der ESP32 hat einen internen Spannungsregler, der 5V auf 3.3V wandelt. Dadurch versorgt Loch 2 der Jura gleichzeitig beide Bausteine.</p>
+    </div>
+
+    <div class="warning">
+      <div class="warning-icon">&#9888;&#65039;</div>
+      <p>Beim <strong>ersten Flash per USB</strong> den Pinheader <strong>nicht</strong> in die Jura stecken! Sonst k&ouml;nnten zwei 5V-Quellen kollidieren. Erst nach dem Flash (danach nur noch OTA) anschliessen.</p>
+    </div>
+  </section>
+
+  <!-- Löt-Reihenfolge -->
+  <section>
+    <h2>L&ouml;t-Reihenfolge</h2>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <strong>Dr&auml;hte zuschneiden</strong>
+        <p>D&uuml;nne Dr&auml;hte (26&ndash;28 AWG) auf ca. 3&ndash;4 cm L&auml;nge zuschneiden. 4 Farben: Rot/Orange, Schwarz, Blau, Gr&uuml;n. Kurz halten &mdash; die Bauteile liegen direkt nebeneinander!</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <strong>ESP32 &rarr; Level Converter (LV-Seite)</strong>
+        <p>Zuerst die einfachere Seite. Alle 4 Verbindungen l&ouml;ten:<br>
+        3V3&rarr;LV &bull; GND&rarr;GND &bull; GPIO4&rarr;LV1 &bull; GPIO5&rarr;LV2</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <strong>Level Converter (HV-Seite) &rarr; Pinheader</strong>
+        <p>Die 4 Verbindungen zur HV-Seite l&ouml;ten:<br>
+        HV&rarr;Loch 2 (+5V) &bull; GND&rarr;Loch 5 &bull; HV1&rarr;Loch 4 (TxD) &bull; HV2&rarr;Loch 6 (RxD)</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <strong>Isolieren</strong>
+        <p>Alle L&ouml;tstellen mit Schrumpfschlauch oder Isolierband sch&uuml;tzen. Kurzschl&uuml;sse im engen Geh&auml;use w&auml;ren fatal.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <strong>Durchklingeln!</strong>
+        <p>Multimeter auf Durchgangsmessung. Jede Verbindung pr&uuml;fen. Keine ungewollten Br&uuml;cken zwischen benachbarten Pins!</p>
+      </div>
+    </div>
+
+    <div class="danger">
+      <div class="warning-icon">&#9888;&#65039;</div>
+      <p><strong>Vor dem Anschliessen an die Jura:</strong> Verdrahtung mit Multimeter durchklingeln! Eine falsche Verbindung kann die Jura-Steuerplatine besch&auml;digen.</p>
+    </div>
+  </section>
+
+  <!-- Level Converter Detail -->
+  <section>
+    <h2>Level Converter &mdash; Pin-Layout</h2>
+    <p style="color: var(--text-dim); margin-bottom: 20px;">Draufsicht auf die Vorderseite (Bauteile sichtbar). LV3/LV4 und HV3/HV4 bleiben frei.</p>
+    <div class="card">
+      <div style="display: flex; justify-content: center; gap: 60px; flex-wrap: wrap;">
+        <!-- HV Side -->
+        <div style="text-align: center;">
+          <div style="color: var(--red); font-weight: 600; margin-bottom: 12px;">HV-Seite (5V / Jura)</div>
+          <div style="display: flex; gap: 8px; justify-content: center; font-family: 'SF Mono', monospace; font-size: 0.85rem;">
+            <div style="text-align:center"><div class="pin-circle active" style="background:var(--accent); width:32px; height:32px; margin:0 auto 4px;">HV1</div><small style="color:var(--text-dim)">Daten</small></div>
+            <div style="text-align:center"><div class="pin-circle active" style="background:var(--green); width:32px; height:32px; margin:0 auto 4px;">HV2</div><small style="color:var(--text-dim)">Daten</small></div>
+            <div style="text-align:center"><div class="pin-circle power" style="width:32px; height:32px; margin:0 auto 4px;">HV</div><small style="color:var(--text-dim)">+5V</small></div>
+            <div style="text-align:center"><div class="pin-circle gnd" style="width:32px; height:32px; margin:0 auto 4px;">GND</div><small style="color:var(--text-dim)">Masse</small></div>
+            <div style="text-align:center"><div class="pin-circle inactive" style="width:32px; height:32px; margin:0 auto 4px;">HV3</div><small style="color:#555">frei</small></div>
+            <div style="text-align:center"><div class="pin-circle inactive" style="width:32px; height:32px; margin:0 auto 4px;">HV4</div><small style="color:#555">frei</small></div>
+          </div>
+        </div>
+        <!-- LV Side -->
+        <div style="text-align: center;">
+          <div style="color: var(--accent); font-weight: 600; margin-bottom: 12px;">LV-Seite (3.3V / ESP32)</div>
+          <div style="display: flex; gap: 8px; justify-content: center; font-family: 'SF Mono', monospace; font-size: 0.85rem;">
+            <div style="text-align:center"><div class="pin-circle active" style="background:var(--accent); width:32px; height:32px; margin:0 auto 4px;">LV1</div><small style="color:var(--text-dim)">Daten</small></div>
+            <div style="text-align:center"><div class="pin-circle active" style="background:var(--green); width:32px; height:32px; margin:0 auto 4px;">LV2</div><small style="color:var(--text-dim)">Daten</small></div>
+            <div style="text-align:center"><div class="pin-circle" style="background:var(--orange); width:32px; height:32px; margin:0 auto 4px;">LV</div><small style="color:var(--text-dim)">3.3V</small></div>
+            <div style="text-align:center"><div class="pin-circle gnd" style="width:32px; height:32px; margin:0 auto 4px;">GND</div><small style="color:var(--text-dim)">Masse</small></div>
+            <div style="text-align:center"><div class="pin-circle inactive" style="width:32px; height:32px; margin:0 auto 4px;">LV3</div><small style="color:#555">frei</small></div>
+            <div style="text-align:center"><div class="pin-circle inactive" style="width:32px; height:32px; margin:0 auto 4px;">LV4</div><small style="color:#555">frei</small></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Test-Checkliste -->
+  <section>
+    <h2>Test vor Einbau</h2>
+    <p style="color: var(--text-dim); margin-bottom: 16px;">Bevor der Pinheader in die Jura gesteckt wird &mdash; alles auf dem Tisch pr&uuml;fen.</p>
+
+    <div class="card">
+      <h3>Multimeter-Tests (ohne Strom)</h3>
+      <ul class="checklist" id="checklist1">
+        <li><div class="check" onclick="toggleCheck(this)"></div>Durchgang: ESP32 GND &harr; Level Converter GND &harr; Pinheader Loch 5 (GND)</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>Durchgang: ESP32 3V3 &harr; Level Converter LV</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>Durchgang: Level Converter HV &harr; Pinheader Loch 2 (+5V)</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>Durchgang: ESP32 GPIO4 &harr; LV1 &harr; HV1 (kein Durchgang erwartet!) &harr; Loch 4 (TxD)</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>Durchgang: ESP32 GPIO5 &harr; LV2 &harr; HV2 (kein Durchgang erwartet!) &harr; Loch 6 (RxD)</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>Keine Kurzschl&uuml;sse zwischen benachbarten Pins</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Spannungstest (ESP32 per USB angeschlossen)</h3>
+      <ul class="checklist" id="checklist2">
+        <li><div class="check" onclick="toggleCheck(this)"></div>3.3V an LV-Pin des Level Converters</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>ESP32 bootet, WiFi verbindet, HA sieht das Ger&auml;t (10.10.3.47)</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>ESPHome-Log zeigt keine UART-Fehler (Timeouts sind OK &mdash; Jura ist ja noch nicht dran)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Live-Test (Pinheader in Jura gesteckt)</h3>
+      <ul class="checklist" id="checklist3">
+        <li><div class="check" onclick="toggleCheck(this)"></div>USB-Kabel vom ESP32 entfernen (Strom kommt jetzt von Jura Pin 6)</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>Jura einschalten &mdash; ESP32 LED leuchtet</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>ESP32 verbindet sich mit WiFi / HA</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>ESPHome-Log: RT:0000 Response mit Hex-Daten (Kaffeez&auml;hler)</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>ESPHome-Log: IC: Response (Tray/Tank Status)</li>
+        <li><div class="check" onclick="toggleCheck(this)"></div>Falls Timeout: TX/RX vertauscht? &rarr; Leitungen an HV1/HV2 bzw. Loch 4/Loch 6 tauschen</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Einbau-Skizze -->
+  <section>
+    <h2>Einbau im Geh&auml;use</h2>
+    <div class="card">
+      <div style="font-family: 'SF Mono', monospace; font-size: 0.85rem; line-height: 1.8; color: var(--text-dim);">
+        <pre style="color: var(--text-dim); margin: 0;">
+Deckel (geschlossen)
+&#9474;
+&#9474;  ~7 mm Luft bis Deckel
+&#9474;
+&#9500;&#9472;&#9472; <span style="color: var(--accent);">Ebene 1</span> &#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472; <span style="color: var(--text);">&larr; ESP32 + Level Converter (nebeneinander, flach)</span>
+&#9474;  5,3 mm
+&#9500;&#9472;&#9472; Oberfl&auml;che Geh&auml;use
+&#9474;  5,5 mm
+&#9500;&#9472;&#9472; <span style="color: var(--green);">Ebene 2 (Oval)</span> &#9472;&#9472;&#9472;&#9472;&#9472; <span style="color: var(--text);">&larr; 60&times;35 mm, Pinheader + Kabel hier</span>
+&#9474;  6,6 mm
+&#9492;&#9472;&#9472; Boden (Service-Port)   <span style="color: var(--text);">&larr; Buchse, Pinheader steckt hier drin</span>
+    = 17,4 mm Gesamttiefe
+        </pre>
+      </div>
+    </div>
+    <div class="success">
+      <div class="warning-icon">&#128204;</div>
+      <p><strong>Design-Ziel:</strong> Unsichtbar im Geh&auml;use. ESP32 (5mm) + Level Converter (1,5mm) passen locker in die 7mm Luft auf Ebene 1. Fixierung mit doppelseitigem Klebeband oder Schaumstoff-Pads. Kein USB-Zugang n&ouml;tig &mdash; Updates gehen &uuml;ber OTA/WiFi.</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  SmartJuraJ9 &mdash; Jura J9.3 &times; ESP32-C6 &times; ESPHome &times; Home Assistant &mdash; M&auml;rz 2026
+</footer>
+
+<script>
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+  el.parentElement.classList.toggle('done');
+}
+</script>
+</body>
+</html>

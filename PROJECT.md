@@ -37,21 +37,25 @@ Deckel (geschlossen)
 - Stromversorgung: 5V vom Jura Service-Port Pin 2
 
 ## Pinout Jura 7-Pin Service Port
-Zählung von rechts nach links (Draufsicht auf Buchse):
-```
-(8)  7   6   5   4   3   2   1  (0)
-nc  nc  +5V  nc  RxD GND TxD  nc  nc
-```
-Positionen 0 und 8 sind unbestückt (9er Raster, 7 Pins bestückt).
 
-| Pin | Funktion | Richtung | Gemessen |
-|-----|----------|----------|----------|
-| 2 | TxD | Jura → ESP | **4,98V** ✓ (idle high) |
-| 3 | GND | — | 0V (Referenz) |
-| 4 | RxD | ESP → Jura | **4,98V** ✓ (Pull-up) |
-| 6 | +5V | Versorgung | **4,98V** ✓ |
+### Bestätigte Belegung (Live-Test 2026-03-16)
+Zählung von links nach rechts, Draufsicht auf die Buchse von oben:
+```
+Loch:   1    2    3    4    5    6    7
+       nc   +5V  nc   TxD  GND  RxD  nc
+```
+7 Löcher sichtbar (kein 9er-Raster bei J9.3).
 
-Quelle: pvtex/esphome-jura-j9 + HA Community Forum, bestätigt per Multimeter am 2026-03-15.
+| Loch (L→R) | Funktion | Richtung | Gemessen | Drahtfarbe |
+|------------|----------|----------|----------|------------|
+| 2 | +5V | Versorgung | **4,98V** ✓ | Rot |
+| 4 | TxD | Jura → ESP | **4,98V** ✓ (idle high) | Blau |
+| 5 | GND | — | 0V (Referenz) | Schwarz |
+| 6 | RxD | ESP → Jura | 0V (kein Pull-up) | Grün |
+
+Bestätigt per Multimeter + erfolgreicher UART-Kommunikation (RT:0000, IC:) am 2026-03-16.
+
+**Achtung:** pvtex-Nummerierung (rechts→links) weicht ab! Immer diese Tabelle verwenden.
 
 ## ESPHome Komponente
 - Eigene externe Komponente: `esphome/components/jura_coffee/` (esp-idf kompatibel)
@@ -222,5 +226,9 @@ Design-Ziele: Unsichtbar im Maschinengehäuse, kein externes Gehäuse nötig.
 - 2026-03-15: Service-Port Pinout verifiziert (Pin 3=GND, Pin 6=+5V=4.98V, Pin 2=TxD, Pin 4=RxD)
 - 2026-03-15: ESP32-C6 geflasht, online in HA als "Jura J9.3" (IP 10.10.3.47), WDT-Fix applied
 - 2026-03-15: MAC-Kollision mit KVM-ESP gelöst (statische IP), beide ESPs laufen parallel
-- **Nächster Schritt:** Phase 2 — Löten (ESP + Level Converter + Pinheader) und an Jura anschliessen
+- 2026-03-16: UART-Kommunikation funktioniert! RT:0000 und IC: liefern Daten
+- 2026-03-16: Pinout KORRIGIERT und per Multimeter + Live-Test bestätigt (siehe unten)
+- 2026-03-16: Verdrahtung via Dupont-Stecker (kein Löten am Pinheader nötig)
+- 2026-03-16: Stromversorgung ESP32 via Jura Service-Port +5V funktioniert
+- **Nächster Schritt:** Phase 5 — HA-Dashboard, Buttons testen (Getränke-Befehle), Einbau planen
 Plan wird laufend aktualisiert.
